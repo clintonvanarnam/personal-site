@@ -14,7 +14,6 @@
     #projects-list li { margin: 0 0 10px 0; position: relative; padding-left: 15px; }
     #projects-list li::before { content: '☮'; position: absolute; left: 0; }
     .col-year { display: inline-block; width: 50px; }
-    .col-title { display: inline-block; width: 150px; }
     .col-collaborators { font-size: 12px; }
   </style>
 </head>
@@ -193,7 +192,7 @@
               }
             }
             
-            return `<li>${year}${title}${roleAndCollaborators}</li>`
+            return `<li>${year}<br>${title}${roleAndCollaborators}</li>`
           }).join('')
         } else {
           projectsList.innerHTML = '<li>No projects yet</li>'
