@@ -17,6 +17,8 @@
     <section aria-labelledby="contact">
       <p id="contact-work">Email (work): <span>Loading...</span></p>
       <p id="contact-classes">Email (classes): <span>Loading...</span></p>
+      <p id="contact-social">Loading...</p>
+      <p id="contact-linkedin">Loading...</p>
     </section>
 
     <section aria-labelledby="projects">
@@ -39,7 +41,9 @@
         description,
         bio,
         contactWork,
-        contactClasses
+        contactClasses,
+        socialUrl,
+        linkedinUrl
       },
       "projects": *[_type == "project"]|order(year desc, _updatedAt desc){
         title,
@@ -109,52 +113,7 @@
       }).join('');
     }
 
-    // Animate project list bullets by cycling fleurons at random times per item
-    function startFleuronPhasing() {
-      const FLEURONS = ['\u2766', '\u2767', '\u2055', '\u273B', '\u273C', '\u273D', '\u273E', '\u273F', '\u2740', '\u2741', '\u2743', '\u274A', '\u274B']
-      const list = document.getElementById('projects-list')
-      if (!list) return
-      const items = Array.from(list.querySelectorAll('li'))
-      if (items.length === 0) return
 
-      // Build a stable, per-item shuffled sequence and independent random timers
-      const perItem = items.map((li, i) => {
-        // Seeded shuffle for stable, varied sequences
-        let s = (i + 1) * 1103515245 + 12345
-        const seq = FLEURONS.slice()
-        for (let j = seq.length - 1; j > 0; j--) {
-          s = (s * 1103515245 + 12345) & 0x7fffffff
-          const k = Math.floor((s / 0x80000000) * (j + 1))
-          const tmp = seq[j]; seq[j] = seq[k]; seq[k] = tmp
-        }
-        return { li, seq, pos: 0, nextAt: 0 }
-      })
-
-      // Initialize display
-      perItem.forEach(e => e.li.setAttribute('data-bullet', e.seq[e.pos]))
-
-      // Random interval helpers (in ms)
-      const MIN_MS = 400
-      const MAX_MS = 1800
-      const randMs = () => MIN_MS + Math.random() * (MAX_MS - MIN_MS)
-
-      function tick(now) {
-        perItem.forEach(entry => {
-          if (entry.nextAt === 0) {
-            entry.nextAt = now + randMs()
-          }
-          if (now >= entry.nextAt) {
-            entry.pos = (entry.pos + 1) % entry.seq.length
-            entry.li.setAttribute('data-bullet', entry.seq[entry.pos])
-            entry.nextAt = now + randMs()
-          }
-        })
-        window.__fleuronPhasingRAF = requestAnimationFrame(tick)
-      }
-
-      if (window.__fleuronPhasingRAF) cancelAnimationFrame(window.__fleuronPhasingRAF)
-      window.__fleuronPhasingRAF = requestAnimationFrame(tick)
-    }
 
 
     async function loadContent() {
@@ -202,6 +161,22 @@
           classesEl.textContent = 'Email (classes):'
         }
         
+        // Update social link
+        const socialEl = document.getElementById('contact-social')
+        if (settings?.socialUrl) {
+          socialEl.innerHTML = `<a href="${escapeHtml(settings.socialUrl)}" target="_blank" rel="noopener noreferrer">Social</a>`
+        } else {
+          socialEl.textContent = 'Social'
+        }
+        
+        // Update LinkedIn link
+        const linkedinEl = document.getElementById('contact-linkedin')
+        if (settings?.linkedinUrl) {
+          linkedinEl.innerHTML = `<a href="${escapeHtml(settings.linkedinUrl)}" target="_blank" rel="noopener noreferrer">LinkedIn</a>`
+        } else {
+          linkedinEl.textContent = 'LinkedIn'
+        }
+        
         // Update projects
         const projectsList = document.getElementById('projects-list')
         if (projects && projects.length > 0) {
@@ -237,8 +212,6 @@
             const sym = DINGBATS[Math.floor(Math.random() * DINGBATS.length)]
             return `<li data-bullet="${sym}">${year}<br>${title}${roleAndCollaborators}</li>`
           }).join('')
-          // Start phasing animation after list is populated
-          startFleuronPhasing()
         } else {
           projectsList.innerHTML = '<li>No projects yet</li>'
         }
