@@ -11,8 +11,8 @@
     body { margin: 20px; max-width: 450px; }
     .loading { opacity: 0.5; }
     #projects-list { list-style: none; padding-left: 0; }
-    #projects-list li { margin: 0 0 10px 0; position: relative; padding-left: 15px; }
-    #projects-list li::before { content: '☮'; position: absolute; left: 0; }
+  #projects-list li { margin: 0 0 10px 0; position: relative; padding-left: 15px; }
+  #projects-list li::before { content: attr(data-bullet); position: absolute; left: 0; }
     .col-year { display: inline-block; width: 50px; }
     .col-collaborators { font-size: 12px; }
   </style>
@@ -167,6 +167,9 @@
         // Update projects
         const projectsList = document.getElementById('projects-list')
         if (projects && projects.length > 0) {
+          // Fleuron symbols (typographic ornaments): ❦ ❧ ⁕ ✻ ✼ ✽ ✾ ✿ ❀ ❁ ❃ ❊ ❋
+          const DINGBATS = ['\u2766', '\u2767', '\u2055', '\u273B', '\u273C', '\u273D', '\u273E', '\u273F', '\u2740', '\u2741', '\u2743', '\u274A', '\u274B']
+
           projectsList.innerHTML = projects.map(p => {
             const year = p.year ? `<span class="col-year">${escapeHtml(String(p.year))}</span>` : '<span class="col-year"></span>'
             
@@ -192,7 +195,9 @@
               }
             }
             
-            return `<li>${year}<br>${title}${roleAndCollaborators}</li>`
+            // pick a random dingbat for this item
+            const sym = DINGBATS[Math.floor(Math.random() * DINGBATS.length)]
+            return `<li data-bullet="${sym}">${year}<br>${title}${roleAndCollaborators}</li>`
           }).join('')
         } else {
           projectsList.innerHTML = '<li>No projects yet</li>'
