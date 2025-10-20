@@ -10,8 +10,9 @@
     *, *::before, *::after { font-size: 12px; font-weight: normal;  line-height:1.2;}
     body { margin: 20px; max-width: 550px; }
     .loading { opacity: 0.5; }
-    #projects-list { list-style-position: outside; padding-left: 0; }
-    #projects-list li { margin: 0 0 10px 0; }
+    #projects-list { list-style: none; padding-left: 0; }
+    #projects-list li { margin: 0 0 10px 0; position: relative; padding-left: 15px; }
+    #projects-list li::before { content: '☮'; position: absolute; left: 0; }
     .col-year { display: inline-block; width: 50px; }
     .col-title { display: inline-block; width: 150px; }
     .col-role { display: inline-block; }
