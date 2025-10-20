@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clinton Van Arnam</title>
+  <meta name="description" content="Graphic designer and educator based in Brooklyn, NY.">
+  <style>
+    html, body { font-family: Arial, Helvetica, sans-serif, "Courier New", monospace; font-size: 12px; }
+    *, *::before, *::after { font-size: 12px; font-weight: normal;  line-height:1.2;}
+    body { margin: 20px; max-width: 550px; }
+    .loading { opacity: 0.5; }
+    #projects-list { list-style-position: outside; padding-left: 0; }
+    #projects-list li { margin: 0 0 10px 0; }
+    .col-year { display: inline-block; width: 50px; }
+    .col-title { display: inline-block; width: 150px; }
+    .col-role { display: inline-block; }
+    .col-collaborators { display: inline-block; margin-left: 200px; font-size: 12px; }
+  </style>
+</head>
+<body class="loading">
+  <main>
+    <section aria-labelledby="about">
+     
+      <p id="bio">Loading...</p>
+    </section>
+
+    <section aria-labelledby="contact">
+      <p id="contact-work">Email (work): <span>Loading...</span></p>
+      <p id="contact-classes">Email (classes): <span>Loading...</span></p>
+    </section>
+
+    <section aria-labelledby="projects">
+      <h2 id="projects">His website is currently under development; but you can see some of his most recent projects below.</h2>
+      <ul id="projects-list">
+        <li>Loading projects...</li>
+      </ul>
+    </section>
+  </main>
+
+  <script type="module">
+    const PROJECT_ID = 'sgwgpnzc'
+    const DATASET = 'production'
+    const API_VERSION = '2025-10-19'
+    
+    // Sanity CDN query endpoint (public, no token needed for public datasets)
+    const query = encodeURIComponent(`{
+      "settings": *[_type == "siteSettings"][0]{
+        title,
+        description,
+        bio,
+        contactWork,
+        contactClasses
+      },
+      "projects": *[_type == "project"]|order(year desc, _updatedAt desc){
+        title,
+        role,
+        year,
+        notes,
+        url,
+        collaborators
+      }
+    }`)
+    
+    const url = `https://${PROJECT_ID}.api.sanity.io/v${API_VERSION}/data/query/${DATASET}?query=${query}`
+
+    function escapeHtml(str = '') {
+      const div = document.createElement('div')
+      div.textContent = str
+      return div.innerHTML
+    }
+
+    // Convert Sanity block content to HTML
+    function blockContentToHtml(blocks) {
+      if (!blocks || !Array.isArray(blocks)) return ''
+      
+      return blocks.map(block => {
+        if (block._type === 'block') {
+          const children = block.children || []
+          const markDefs = block.markDefs || []
+          
+          const text = children.map(child => {
+            let content = escapeHtml(child.text || '')
+            
+            // Handle marks (bold, italic, links, etc.)
+            if (child.marks && child.marks.length > 0) {
+              // Process marks in reverse to handle nesting properly
+              const marks = [...child.marks].reverse()
+              
+              marks.forEach(mark => {
+                // Check if it's a simple mark
+                if (mark === 'strong') {
+                  content = `<strong>${content}</strong>`
+                } else if (mark === 'em') {
+                  content = `<em>${content}</em>`
+                } else if (mark === 'code') {
+                  content = `<code>${content}</code>`
+                } else {
+                  // Check if it's a link (markDef reference)
+                  const markDef = markDefs.find(def => def._key === mark)
+                  if (markDef && markDef._type === 'link') {
+                    const href = escapeHtml(markDef.href || '')
+                    content = `<a href="${href}" target="_blank" rel="noopener noreferrer">${content}</a>`
+                  }
+                }
+              })
+            }
+            return content
+          }).join('')
+          
+          // Wrap in appropriate tag based on style
+          const style = block.style || 'normal'
+          if (style === 'h1') return `<h1>${text}</h1>`
+          if (style === 'h2') return `<h2>${text}</h2>`
+          if (style === 'h3') return `<h3>${text}</h3>`
+          if (style === 'h4') return `<h4>${text}</h4>`
+          return `<p>${text}</p>`
+        }
+        return ''
+      }).join('')
+    }
+
+    async function loadContent() {
+      try {
+        console.log('Fetching from:', url)
+        const response = await fetch(url)
+        console.log('Response status:', response.status)
+        const data = await response.json()
+        console.log('Data received:', data)
+        
+        const { settings, projects } = data.result
+        
+        // Update title
+        if (settings?.title) {
+          document.title = settings.title
+        }
+        
+        // Update bio (rich text)
+        const bioEl = document.getElementById('bio')
+        if (settings?.bio) {
+          if (Array.isArray(settings.bio)) {
+            // Rich text format
+            bioEl.innerHTML = blockContentToHtml(settings.bio)
+          } else {
+            // Plain text fallback
+            bioEl.textContent = settings.bio
+          }
+        } else {
+          bioEl.textContent = ''
+        }
+        
+        // Update contact work
+        const workEl = document.getElementById('contact-work')
+        if (settings?.contactWork) {
+          workEl.innerHTML = `Email (work): <a href="mailto:${escapeHtml(settings.contactWork)}">${escapeHtml(settings.contactWork)}</a>`
+        } else {
+          workEl.textContent = 'Email (work):'
+        }
+        
+        // Update contact classes
+        const classesEl = document.getElementById('contact-classes')
+        if (settings?.contactClasses) {
+          classesEl.innerHTML = `Email (classes): <a href="mailto:${escapeHtml(settings.contactClasses)}">${escapeHtml(settings.contactClasses)}</a>`
+        } else {
+          classesEl.textContent = 'Email (classes):'
+        }
+        
+        // Update projects
+        const projectsList = document.getElementById('projects-list')
+        if (projects && projects.length > 0) {
+          projectsList.innerHTML = projects.map(p => {
+            const year = p.year ? `<span class="col-year">${escapeHtml(String(p.year))}</span>` : '<span class="col-year"></span>'
+            
+            // Only title is a link
+            let title
+            if (p.title && p.url) {
+              title = `<span class="col-title"><a href="${escapeHtml(p.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(p.title)}</a></span>`
+            } else if (p.title) {
+              title = `<span class="col-title">${escapeHtml(p.title)}</span>`
+            } else {
+              title = '<span class="col-title"></span>'
+            }
+            
+            let roleAndCollaborators = ''
+            if (p.role) {
+              roleAndCollaborators = `<span class="col-role">${escapeHtml(p.role)}</span>`
+              if (p.collaborators) {
+                roleAndCollaborators += `<br><span class="col-collaborators">${escapeHtml(p.collaborators)}</span>`
+              }
+            } else if (p.collaborators) {
+              roleAndCollaborators = `<span class="col-role"></span><br><span class="col-collaborators">${escapeHtml(p.collaborators)}</span>`
+            } else {
+              roleAndCollaborators = '<span class="col-role"></span>'
+            }
+            
+            return `<li>${year}${title}${roleAndCollaborators}</li>`
+          }).join('')
+        } else {
+          projectsList.innerHTML = '<li>No projects yet</li>'
+        }
+        
+        // Remove loading state
+        document.body.classList.remove('loading')
+        
+      } catch (error) {
+        console.error('Failed to load content from Sanity:', error)
+        document.body.classList.remove('loading')
+        document.getElementById('bio').textContent = 'Failed to load content. Please refresh the page.'
+      }
+    }
+
+    loadContent()
+  </script>
+</body>
+</html>

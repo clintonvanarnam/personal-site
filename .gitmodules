@@ -1,0 +1,3 @@
+[submodule "clinton-personal-site"]
+	path = clinton-personal-site
+	url = ./clinton-personal-site
