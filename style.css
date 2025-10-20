@@ -1,0 +1,11 @@
+:root { --font-size: 20px; }
+html, body { font-family: Arial, Helvetica, sans-serif, "Courier New", monospace; font-size: var(--font-size); }
+*, *::before, *::after { font-size: var(--font-size); font-weight: normal;  line-height:1.2;}
+body { margin: 20px; max-width: 450px; }
+.loading { opacity: 0.5; }
+#projects-list { list-style: none; padding-left: 0; }
+#projects-list li { margin: 0 0 10px 0; position: relative; padding-left: 25px; }
+#projects-list li::before { content: attr(data-bullet); position: absolute; left: 0; }
+.col-year { display: inline-block; width: 50px; }
+.col-collaborators { font-size: var(--font-size); }
+/* ascii overlay removed */

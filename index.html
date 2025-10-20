@@ -5,17 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clinton Van Arnam</title>
   <meta name="description" content="Graphic designer and educator based in Brooklyn, NY.">
-  <style>
-    html, body { font-family: Arial, Helvetica, sans-serif, "Courier New", monospace; font-size: 12px; }
-    *, *::before, *::after { font-size: 12px; font-weight: normal;  line-height:1.2;}
-    body { margin: 20px; max-width: 450px; }
-    .loading { opacity: 0.5; }
-    #projects-list { list-style: none; padding-left: 0; }
-  #projects-list li { margin: 0 0 10px 0; position: relative; padding-left: 15px; }
-  #projects-list li::before { content: attr(data-bullet); position: absolute; left: 0; }
-    .col-year { display: inline-block; width: 50px; }
-    .col-collaborators { font-size: 12px; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body class="loading">
   <main>
@@ -116,8 +106,56 @@
           return `<p>${text}</p>`
         }
         return ''
-      }).join('')
+      }).join('');
     }
+
+    // Animate project list bullets by cycling fleurons at random times per item
+    function startFleuronPhasing() {
+      const FLEURONS = ['\u2766', '\u2767', '\u2055', '\u273B', '\u273C', '\u273D', '\u273E', '\u273F', '\u2740', '\u2741', '\u2743', '\u274A', '\u274B']
+      const list = document.getElementById('projects-list')
+      if (!list) return
+      const items = Array.from(list.querySelectorAll('li'))
+      if (items.length === 0) return
+
+      // Build a stable, per-item shuffled sequence and independent random timers
+      const perItem = items.map((li, i) => {
+        // Seeded shuffle for stable, varied sequences
+        let s = (i + 1) * 1103515245 + 12345
+        const seq = FLEURONS.slice()
+        for (let j = seq.length - 1; j > 0; j--) {
+          s = (s * 1103515245 + 12345) & 0x7fffffff
+          const k = Math.floor((s / 0x80000000) * (j + 1))
+          const tmp = seq[j]; seq[j] = seq[k]; seq[k] = tmp
+        }
+        return { li, seq, pos: 0, nextAt: 0 }
+      })
+
+      // Initialize display
+      perItem.forEach(e => e.li.setAttribute('data-bullet', e.seq[e.pos]))
+
+      // Random interval helpers (in ms)
+      const MIN_MS = 400
+      const MAX_MS = 1800
+      const randMs = () => MIN_MS + Math.random() * (MAX_MS - MIN_MS)
+
+      function tick(now) {
+        perItem.forEach(entry => {
+          if (entry.nextAt === 0) {
+            entry.nextAt = now + randMs()
+          }
+          if (now >= entry.nextAt) {
+            entry.pos = (entry.pos + 1) % entry.seq.length
+            entry.li.setAttribute('data-bullet', entry.seq[entry.pos])
+            entry.nextAt = now + randMs()
+          }
+        })
+        window.__fleuronPhasingRAF = requestAnimationFrame(tick)
+      }
+
+      if (window.__fleuronPhasingRAF) cancelAnimationFrame(window.__fleuronPhasingRAF)
+      window.__fleuronPhasingRAF = requestAnimationFrame(tick)
+    }
+
 
     async function loadContent() {
       try {
@@ -199,6 +237,8 @@
             const sym = DINGBATS[Math.floor(Math.random() * DINGBATS.length)]
             return `<li data-bullet="${sym}">${year}<br>${title}${roleAndCollaborators}</li>`
           }).join('')
+          // Start phasing animation after list is populated
+          startFleuronPhasing()
         } else {
           projectsList.innerHTML = '<li>No projects yet</li>'
         }
