@@ -8,15 +8,14 @@
   <style>
     html, body { font-family: Arial, Helvetica, sans-serif, "Courier New", monospace; font-size: 12px; }
     *, *::before, *::after { font-size: 12px; font-weight: normal;  line-height:1.2;}
-    body { margin: 20px; max-width: 550px; }
+    body { margin: 20px; max-width: 450px; }
     .loading { opacity: 0.5; }
     #projects-list { list-style: none; padding-left: 0; }
     #projects-list li { margin: 0 0 10px 0; position: relative; padding-left: 15px; }
     #projects-list li::before { content: '☮'; position: absolute; left: 0; }
     .col-year { display: inline-block; width: 50px; }
     .col-title { display: inline-block; width: 150px; }
-    .col-role { display: inline-block; }
-    .col-collaborators { display: inline-block; margin-left: 200px; font-size: 12px; }
+    .col-collaborators { font-size: 12px; }
   </style>
 </head>
 <body class="loading">
@@ -183,15 +182,15 @@
             }
             
             let roleAndCollaborators = ''
-            if (p.role) {
-              roleAndCollaborators = `<span class="col-role">${escapeHtml(p.role)}</span>`
-              if (p.collaborators) {
-                roleAndCollaborators += `<br><span class="col-collaborators">${escapeHtml(p.collaborators)}</span>`
+            if (p.role || p.collaborators) {
+              roleAndCollaborators = '<br>'
+              if (p.role) {
+                roleAndCollaborators += `<span class="col-role">${escapeHtml(p.role)}</span>`
               }
-            } else if (p.collaborators) {
-              roleAndCollaborators = `<span class="col-role"></span><br><span class="col-collaborators">${escapeHtml(p.collaborators)}</span>`
-            } else {
-              roleAndCollaborators = '<span class="col-role"></span>'
+              if (p.collaborators) {
+                if (p.role) roleAndCollaborators += '<br>'
+                roleAndCollaborators += `<span class="col-collaborators">${escapeHtml(p.collaborators)}</span>`
+              }
             }
             
             return `<li>${year}${title}${roleAndCollaborators}</li>`
