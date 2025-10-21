@@ -193,7 +193,16 @@
                 dateStr = `<span class="col-date">${d.toISOString().slice(0,10)}</span>`
               }
             }
-            const year = p.year ? `<span class="col-year">${escapeHtml(String(p.year))}</span>` : '<span class="col-year"></span>'
+            let yearStr = ''
+            if (p.date) {
+              const d = new Date(p.date)
+              if (!isNaN(d)) {
+                yearStr = `<span class="col-year">${d.getFullYear()}</span>`
+              }
+            }
+            if (!yearStr && p.year) {
+              yearStr = `<span class="col-year">${escapeHtml(String(p.year))}</span>`
+            }
             
             // Only title is a link
             let title
@@ -219,7 +228,7 @@
             
             // pick a random dingbat for this item
             const sym = DINGBATS[Math.floor(Math.random() * DINGBATS.length)]
-            return `<li data-bullet="${sym}">${dateStr || year}<br>${title}${roleAndCollaborators}</li>`
+            return `<li data-bullet="${sym}">${yearStr}<br>${title}${roleAndCollaborators}</li>`
           }).join('')
         } else {
           projectsList.innerHTML = '<li>No projects yet</li>'
