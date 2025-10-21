@@ -4,7 +4,7 @@
 }
 html, body { font-family: Arial, Helvetica, sans-serif, "Courier New", monospace; font-size: var(--font-size); }
 *, *::before, *::after { font-size: var(--font-size); font-weight: normal;  line-height:1.2;}
-body { margin: 20px; max-width: 550px; }
+body { margin: 20px; max-width: 525px; }
 .loading { opacity: 0.5; }
 p, h1, h2, h3, h4, h5, h6, ul, ol, li { 
   margin-top: var(--margin-size); 
