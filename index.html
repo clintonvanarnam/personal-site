@@ -45,9 +45,10 @@
         socialUrl,
         linkedinUrl
       },
-      "projects": *[_type == "project"]|order(year desc, _updatedAt desc){
+      "projects": *[_type == "project"]|order(date desc, year desc, _updatedAt desc){
         title,
         role,
+        date,
         year,
         notes,
         url,
@@ -184,6 +185,14 @@
           const DINGBATS = ['\u2766', '\u2767', '\u2055', '\u273B', '\u273C', '\u273D', '\u273E', '\u273F', '\u2740', '\u2741', '\u2743', '\u274A', '\u274B']
 
           projectsList.innerHTML = projects.map(p => {
+            let dateStr = ''
+            if (p.date) {
+              // Format date as YYYY-MM-DD
+              const d = new Date(p.date)
+              if (!isNaN(d)) {
+                dateStr = `<span class="col-date">${d.toISOString().slice(0,10)}</span>`
+              }
+            }
             const year = p.year ? `<span class="col-year">${escapeHtml(String(p.year))}</span>` : '<span class="col-year"></span>'
             
             // Only title is a link
@@ -210,7 +219,7 @@
             
             // pick a random dingbat for this item
             const sym = DINGBATS[Math.floor(Math.random() * DINGBATS.length)]
-            return `<li data-bullet="${sym}">${year}<br>${title}${roleAndCollaborators}</li>`
+            return `<li data-bullet="${sym}">${dateStr || year}<br>${title}${roleAndCollaborators}</li>`
           }).join('')
         } else {
           projectsList.innerHTML = '<li>No projects yet</li>'
