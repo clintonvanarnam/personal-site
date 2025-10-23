@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// Sanity configuration (using direct API calls for static generation)
+// Sanity configuration
 const PROJECT_ID = 'sgwgpnzc'
 const DATASET = 'production'
 const API_VERSION = '2025-10-19'
@@ -60,7 +60,6 @@ function blockContentToHtml(blocks) {
       const text = children.map(child => {
         let content = escapeHtml(child.text || '')
         
-        // Handle marks (bold, italic, links, etc.)
         if (child.marks && child.marks.length > 0) {
           const marks = [...child.marks].reverse()
           
@@ -94,15 +93,9 @@ function blockContentToHtml(blocks) {
   }).join('')
 }
 
-async function buildStaticSite() {
+async function generateStaticHTML() {
   console.log('🔄 Fetching content from Sanity...')
   const { settings, projects } = await fetchContent()
-  
-  console.log('🔧 Reading current template...')
-  const templatePath = path.join(__dirname, 'index.html')
-  let html = await fs.readFile(templatePath, 'utf8')
-  
-  console.log('🎨 Generating static content...')
   
   // Generate bio content
   let bioContent = ''
@@ -173,54 +166,96 @@ async function buildStaticSite() {
       return `<li data-bullet="${sym}">${yearStr}<br>${title}${roleAndCollaborators}</li>`
     }).join('')
   }
-  
-  // Replace dynamic content with static content and remove loading states
-  html = html
-    .replace(/<body class="loading">/, '<body>')
-    .replace(/<p id="bio">Loading\.\.\.<\/p>/, `<p id="bio">${bioContent}</p>`)
-    .replace(/Email \(work\): <span>Loading\.\.\.<\/span>/, contactWork)
-    .replace(/Email \(classes\): <span>Loading\.\.\.<\/span>/, contactClasses)
-    .replace(/<p id="contact-social">Loading\.\.\.<\/p>/, `<p id="contact-social">${socialLink}</p>`)
-    .replace(/<p id="contact-linkedin">Loading\.\.\.<\/p>/, `<p id="contact-linkedin">${linkedinLink}</p>`)
-    .replace(/<li>Loading projects\.\.\.<\/li>/, projectsContent)
-    // Remove the entire JavaScript section since we have static content
-    .replace(/<script type="module">[\s\S]*?<\/script>/s, '')
-    // Fix any remaining empty spans or loading states
-    .replace(/<span>Loading\.\.\.<\/span>/g, '')
-    .replace(/<span><\/span>/g, '')
-    .replace(/Loading\.\.\./g, '')
-  
-  // Update title if provided
-  if (settings?.title) {
-    html = html.replace(/<title>.*?<\/title>/, `<title>${escapeHtml(settings.title)}</title>`)
-  }
-  
-  // Create dist directory
-  const distDir = path.join(__dirname, 'dist')
-  await fs.mkdir(distDir, { recursive: true })
-  
-  // Write static HTML
-  await fs.writeFile(path.join(distDir, 'index.html'), html)
-  
-  // Copy assets
-  await fs.copyFile(path.join(__dirname, 'style.css'), path.join(distDir, 'style.css'))
-  
-  // Copy favicon directory
-  const faviconSrc = path.join(__dirname, 'favicon')
-  const faviconDest = path.join(distDir, 'favicon')
-  await fs.mkdir(faviconDest, { recursive: true })
-  
-  const faviconFiles = await fs.readdir(faviconSrc)
-  for (const file of faviconFiles) {
-    await fs.copyFile(path.join(faviconSrc, file), path.join(faviconDest, file))
-  }
-  
-  console.log('✅ Static site generated successfully!')
-  console.log('📁 Files created in /dist directory')
-  console.log('🚀 Deploy the /dist folder to your hosting provider')
+
+  // Generate complete HTML from scratch
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(settings?.title || 'Clinton Van Arnam')}</title>
+  <meta name="description" content="Graphic designer and educator based in Brooklyn, NY.">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg">
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon/favicon-96x96.png">
+  <link rel="apple-touch-icon" href="favicon/apple-touch-icon.png">
+  <link rel="manifest" href="favicon/site.webmanifest">
+
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="Clinton Van Arnam" />
+  <meta property="og:description" content="Graphic designer and educator based in Brooklyn, NY." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://clintonvanarnam.net" />
+  <meta property="og:image" content="https://clintonvanarnam.net/favicon/web-app-manifest-512x512.png" />
+
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Clinton Van Arnam" />
+  <meta name="twitter:description" content="Graphic designer and educator based in Brooklyn, NY." />
+  <meta name="twitter:image" content="https://clintonvanarnam.net/favicon/web-app-manifest-512x512.png" />
+</head>
+<body>
+  <main>
+    <section aria-labelledby="about">
+      <div id="bio">${bioContent}</div>
+    </section>
+
+    <section aria-labelledby="contact">
+      <p id="contact-work">${contactWork}</p>
+      <p id="contact-classes">${contactClasses}</p>
+      <p id="contact-social">${socialLink}</p>
+      <p id="contact-linkedin">${linkedinLink}</p>
+    </section>
+
+    <section aria-labelledby="projects">
+      <p>- - - - - - - - - - - - - - - - - - - - - - - -</p>
+      <h2 id="projects">Recent:</h2>
+      <ul id="projects-list">
+        ${projectsContent}
+      </ul>
+    </section>
+  </main>
+</body>
+</html>`
+
+  return html
 }
 
-buildStaticSite().catch(err => {
-  console.error('❌ Build failed:', err)
-  process.exit(1)
-})
+async function buildStaticSite() {
+  try {
+    const html = await generateStaticHTML()
+    
+    console.log('🔧 Creating dist directory...')
+    const distDir = path.join(__dirname, 'dist')
+    await fs.mkdir(distDir, { recursive: true })
+    
+    console.log('📝 Writing static HTML...')
+    await fs.writeFile(path.join(distDir, 'index.html'), html)
+    
+    console.log('📋 Copying assets...')
+    await fs.copyFile(path.join(__dirname, 'style.css'), path.join(distDir, 'style.css'))
+    
+    // Copy favicon directory
+    const faviconSrc = path.join(__dirname, 'favicon')
+    const faviconDest = path.join(distDir, 'favicon')
+    await fs.mkdir(faviconDest, { recursive: true })
+    
+    const faviconFiles = await fs.readdir(faviconSrc)
+    for (const file of faviconFiles) {
+      await fs.copyFile(path.join(faviconSrc, file), path.join(faviconDest, file))
+    }
+    
+    console.log('✅ Static site generated successfully!')
+    console.log('📁 Files created in /dist directory')
+    console.log('🚀 Deploy the /dist folder to your hosting provider')
+    
+  } catch (error) {
+    console.error('❌ Build failed:', error)
+    process.exit(1)
+  }
+}
+
+buildStaticSite()

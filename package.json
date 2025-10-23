@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "node build-static.js",
+    "dev": "python3 -m http.server 8000",
+    "build:serve": "npm run build && cd dist && python3 -m http.server 8001"
   },
   "dependencies": {
     "@portabletext/to-html": "^3.0.0",
