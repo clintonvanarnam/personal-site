@@ -127,9 +127,11 @@ async function generateStaticHTML() {
   // Generate projects content
   let projectsContent = '<li>No projects yet</li>'
   if (projects && projects.length > 0) {
+    // Shuffle the dingbats array for more visual variety
     const DINGBATS = ['\u2766', '\u2767', '\u2055', '\u273B', '\u273C', '\u273D', '\u273E', '\u273F', '\u2740', '\u2741', '\u2743', '\u274A', '\u274B']
+    const shuffledDingbats = [...DINGBATS].sort(() => Math.random() - 0.5)
     
-    projectsContent = projects.map(p => {
+    projectsContent = projects.map((p, index) => {
       let yearStr = ''
       if (p.date) {
         const d = new Date(p.date)
@@ -162,7 +164,7 @@ async function generateStaticHTML() {
         }
       }
       
-      const sym = DINGBATS[Math.floor(Math.random() * DINGBATS.length)]
+      const sym = shuffledDingbats[index % shuffledDingbats.length]
       return `<li data-bullet="${sym}">${yearStr}<br>${title}${roleAndCollaborators}</li>`
     }).join('')
   }
